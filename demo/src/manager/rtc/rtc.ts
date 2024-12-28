@@ -5,7 +5,11 @@ import AgoraRTC, {
   IAgoraRTCClient,
   IMicrophoneAudioTrack,
   IRemoteAudioTrack,
-  UID, ICameraVideoTrack,
+  UID,
+  ICameraVideoTrack,
+  NetworkQuality,
+  IRemoteUser,
+  ClientConfig
 } from "agora-rtc-sdk-ng"
 import { ITextItem } from "@/types"
 import { AGEventEmitter } from "../events"
@@ -33,7 +37,12 @@ export class RtcManager extends AGEventEmitter<RtcEvents> {
     super()
     this._joined = false
     this.localTracks = {}
-    this.client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" })
+    const config: ClientConfig = {
+      mode: "rtc",
+      codec: "vp8",
+      enableAnalytics: false  // Disable analytics to prevent blocked requests
+    }
+    this.client = AgoraRTC.createClient(config)
     this._listenRtcEvents()
   }
 
@@ -136,10 +145,10 @@ export class RtcManager extends AGEventEmitter<RtcEvents> {
 
   // -------------- private methods --------------
   private _listenRtcEvents() {
-    this.client.on("network-quality", (quality) => {
+    this.client.on("network-quality", (quality: NetworkQuality) => {
       this.emit("networkQuality", quality)
     })
-    this.client.on("user-published", async (user, mediaType) => {
+    this.client.on("user-published", async (user: IRemoteUser, mediaType: "audio" | "video") => {
       await this.client.subscribe(user, mediaType)
       if (mediaType === "audio") {
         this._playAudio(user.audioTrack)
@@ -150,7 +159,7 @@ export class RtcManager extends AGEventEmitter<RtcEvents> {
         videoTrack: user.videoTrack,
       })
     })
-    this.client.on("user-unpublished", async (user, mediaType) => {
+    this.client.on("user-unpublished", async (user: IRemoteUser, mediaType: "audio" | "video") => {
       await this.client.unsubscribe(user, mediaType)
       this.emit("remoteUserChanged", {
         userId: user.uid,

@@ -434,6 +434,41 @@ func (s *HttpServer) handlerVectorDocumentUpload(c *gin.Context) {
 	s.output(c, codeSuccess, map[string]any{"channel_name": req.ChannelName, "collection": collection, "file_name": fileName})
 }
 
+func (s *HttpServer) handlerDevGraphs(c *gin.Context) {
+	content, err := os.ReadFile(PropertyJsonFile)
+	if err != nil {
+		slog.Error("handlerDevGraphs read property.json failed", "err", err, "propertyJsonFile", PropertyJsonFile, logTag)
+		s.output(c, codeErrProcessPropertyFailed, http.StatusInternalServerError)
+		return
+	}
+
+	// Unmarshal the JSON content into a map
+	var propertyJson map[string]interface{}
+	err = json.Unmarshal(content, &propertyJson)
+	if err != nil {
+		slog.Error("handlerDevGraphs unmarshal property.json failed", "err", err, logTag)
+		s.output(c, codeErrParseJsonFailed, http.StatusInternalServerError)
+		return
+	}
+
+	// Locate the predefined graphs array
+	tenSection, ok := propertyJson["_ten"].(map[string]interface{})
+	if !ok {
+		slog.Error("Invalid format: _ten section missing", logTag)
+		s.output(c, codeErrParseJsonFailed, http.StatusInternalServerError)
+		return
+	}
+
+	predefinedGraphs, ok := tenSection["predefined_graphs"].([]interface{})
+	if !ok {
+		slog.Error("Invalid format: predefined_graphs missing or not an array", logTag)
+		s.output(c, codeErrParseJsonFailed, http.StatusInternalServerError)
+		return
+	}
+
+	s.output(c, codeSuccess, predefinedGraphs)
+}
+
 func (s *HttpServer) output(c *gin.Context, code *Code, data any, httpStatus ...int) {
 	if len(httpStatus) == 0 {
 		httpStatus = append(httpStatus, http.StatusOK)
@@ -628,6 +663,7 @@ func (s *HttpServer) Start() {
 	r.GET("/vector/document/preset/list", s.handlerVectorDocumentPresetList)
 	r.POST("/vector/document/update", s.handlerVectorDocumentUpdate)
 	r.POST("/vector/document/upload", s.handlerVectorDocumentUpload)
+	r.GET("/dev/v1/graphs", s.handlerDevGraphs)
 
 	slog.Info("server start", "port", s.config.Port, logTag)
 

@@ -175,7 +175,7 @@ export const globalSlice = createSlice({
 export const initializeGraphData = createAsyncThunk(
   "global/initializeGraphData",
   async (_, { dispatch }) => {
-    await apiReloadPackage();
+    // await apiReloadPackage(); // Removed since endpoint doesn't exist
     const [fetchedGraphs, modules] = await Promise.all([
       apiFetchGraphs(),
       apiFetchInstalledAddons(),

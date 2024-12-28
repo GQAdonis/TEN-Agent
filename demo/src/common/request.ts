@@ -22,7 +22,7 @@ interface GenAgoraDataConfig {
 }
 
 export const apiGenAgoraData = async (config: GenAgoraDataConfig) => {
-  // the request will be rewrite at next.config.mjs to send to $AGENT_SERVER_URL
+  // the request will be rewrite at middleware.tsx to send to $AGENT_SERVER_URL
   const url = `/api/token/generate`
   const { userId, channel } = config
   const data = {
