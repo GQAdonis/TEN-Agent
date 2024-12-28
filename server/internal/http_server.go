@@ -110,8 +110,9 @@ func (s *HttpServer) handlerList(c *gin.Context) {
 }
 
 func (s *HttpServer) handleAddonDefaultProperties(c *gin.Context) {
+	agentsDir := os.Getenv("AGENTS_DIR")
 	// Get the base directory path
-	baseDir := "./agents/ten_packages/extension"
+	baseDir := fmt.Sprintf("%s/ten_packages/extension", agentsDir)
 
 	// Read all folders under the base directory
 	entries, err := os.ReadDir(baseDir)
